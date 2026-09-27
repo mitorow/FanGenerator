@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扇状パターン生成ツール</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            background: #16213e;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .preview-area {
+            flex: 2;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            text-align: center;
+            color: #e94560;
+            margin-bottom: 30px;
+            width: 100%;
+        }
+        h2 {
+            color: #e94560;
+            margin-top: 0;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #0f3460;
+            color: #aaa;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #0f3460;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e94560;
+            cursor: pointer;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+        .value-display {
+            text-align: right;
+            font-size: 14px;
+            color: #e94560;
+            margin-top: 5px;
+        }
+        .color-pair {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .color-item {
+            flex: 1;
+        }
+        .color-item label {
+            font-size: 12px;
+        }
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            color: white;
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+        .btn-random {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            color: white;
+            border: 2px solid #e94560;
+        }
+        .btn-random:hover {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+        }
+        .presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .preset-btn {
+            padding: 8px 15px;
+            border: 1px solid #e94560;
+            background: transparent;
+            color: #e94560;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .preset-btn:hover {
+            background: #e94560;
+            color: white;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎌 扇状パターン生成ツール</h1>
+        
+        <div class="controls">
+            <h2>⚙️ 設定</h2>
+            
+            <div class="control-group">
+                <label>画像サイズ (px)</label>
+                <input type="range" id="size" min="256" max="2048" value="512" step="64">
+                <div class="value-display" id="sizeValue">512 x 512</div>
+            </div>
+            
+            <div class="control-group">
+                <label>扇の数</label>
+                <input type="range" id="segments" min="2" max="32" value="16" step="1">
+                <div class="value-display" id="segmentsValue">16</div>
+            </div>
+            
+            <div class="control-group">
+                <label>回転角度 (°)</label>
+                <input type="range" id="rotation" min="0" max="360" value="0" step="1">
+                <div class="value-display" id="rotationValue">0°</div>
+            </div>
+
+            <div class="control-group">
+                <label>色</label>
+                <div class="color-pair">
+                    <div class="color-item">
+                        <label>色1 (奇数番目)</label>
+                        <input type="color" id="color1" value="#c41e3a">
+                    </div>
+                    <div class="color-item">
+                        <label>色2 (偶数番目)</label>
+                        <input type="color" id="color2" value="#ffffff">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>中心円</label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showCenter">
+                    <span>中心に円を表示</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label>円のサイズ (%)</label>
+                    <input type="range" id="centerSize" min="1" max="50" value="10" step="1">
+                    <div class="value-display" id="centerSizeValue">10%</div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <input type="color" id="centerColor" value="#ffd700" style="height: 35px;">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>プリセット</label>
+                <div class="presets">
+                    <button class="preset-btn" onclick="applyPreset('rising-sun')">🇯🇵 旭日旗</button>
+                    <button class="preset-btn" onclick="applyPreset('bw')">⚫ 白黒</button>
+                    <button class="preset-btn" onclick="applyPreset('gold')">✨ 金色</button>
+                    <button class="preset-btn" onclick="applyPreset('navy')">🌊 海軍</button>
+                </div>
+            </div>
+            
+            <button class="btn btn-random" onclick="randomize()">🎲 ランダム生成</button>
+            <button class="btn btn-save" onclick="saveImage()">💾 画像を保存</button>
+        </div>
+        
+        <div class="preview-area">
+            <h2>👁️ プレビュー</h2>
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // コントロール要素
+        const sizeSlider = document.getElementById('size');
+        const segmentsSlider = document.getElementById('segments');
+        const rotationSlider = document.getElementById('rotation');
+        const color1Input = document.getElementById('color1');
+        const color2Input = document.getElementById('color2');
+        const showCenterCheckbox = document.getElementById('showCenter');
+        const centerSizeSlider = document.getElementById('centerSize');
+        const centerColorInput = document.getElementById('centerColor');
+        
+        // 値表示要素
+        const sizeValue = document.getElementById('sizeValue');
+        const segmentsValue = document.getElementById('segmentsValue');
+        const rotationValue = document.getElementById('rotationValue');
+        const centerSizeValue = document.getElementById('centerSizeValue');
+        
+        // プリセット
+        const presets = {
+            'rising-sun': {
+                segments: 16,
+                color1: '#c41e3a',
+                color2: '#ffffff',
+                showCenter: true,
+                centerSize: 15,
+                centerColor: '#c41e3a'
+            },
+            'bw': {
+                segments: 12,
+                color1: '#000000',
+                color2: '#ffffff',
+                showCenter: false,
+                centerSize: 10,
+                centerColor: '#000000'
+            },
+            'gold': {
+                segments: 24,
+                color1: '#ffd700',
+                color2: '#8b0000',
+                showCenter: true,
+                centerSize: 12,
+                centerColor: '#ffd700'
+            },
+            'navy': {
+                segments: 16,
+                color1: '#001f3f',
+                color2: '#ffffff',
+                showCenter: true,
+                centerSize: 10,
+                centerColor: '#c41e3a'
+            }
+        };
+        
+        function applyPreset(name) {
+            const preset = presets[name];
+            segmentsSlider.value = preset.segments;
+            color1Input.value = preset.color1;
+            color2Input.value = preset.color2;
+            showCenterCheckbox.checked = preset.showCenter;
+            centerSizeSlider.value = preset.centerSize;
+            centerColorInput.value = preset.centerColor;
+            updateDisplay();
+            draw();
+        }
+        
+        function randomize() {
+            segmentsSlider.value = Math.floor(Math.random() * 24) + 4;
+            rotationSlider.value = Math.floor(Math.random() * 360);
+            color1Input.value = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            color2Input.value = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            showCenterCheckbox.checked = Math.random() > 0.5;
+            centerSizeSlider.value = Math.floor(Math.random() * 30) + 5;
+            centerColorInput.value = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            updateDisplay();
+            draw();
+        }
+        
+        function updateDisplay() {
+            const size = sizeSlider.value;
+            sizeValue.textContent = `${size} x ${size}`;
+            segmentsValue.textContent = segmentsSlider.value;
+            rotationValue.textContent = `${rotationSlider.value}°`;
+            centerSizeValue.textContent = `${centerSizeSlider.value}%`;
+        }
+        
+        function draw() {
+            const size = parseInt(sizeSlider.value);
+            const segments = parseInt(segmentsSlider.value);
+            const rotation = parseFloat(rotationSlider.value) * Math.PI / 180;
+            const color1 = color1Input.value;
+            const color2 = color2Input.value;
+            const showCenter = showCenterCheckbox.checked;
+            const centerSize = parseFloat(centerSizeSlider.value) / 100;
+            const centerColor = centerColorInput.value;
+            
+            // キャンバスサイズ設定
+            canvas.width = size;
+            canvas.height = size;
+            
+            // 表示サイズは固定（CSSで制御）
+            canvas.style.width = Math.min(size, 500) + 'px';
+            canvas.style.height = Math.min(size, 500) + 'px';
+            
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = Math.sqrt(2) * size; // 角まで届くように
+            
+            const anglePerSegment = (2 * Math.PI) / segments;
+            
+            // 各扇を描画
+            for (let i = 0; i < segments; i++) {
+                const startAngle = rotation + i * anglePerSegment;
+                const endAngle = rotation + (i + 1) * anglePerSegment;
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                
+                ctx.fillStyle = i % 2 === 0 ? color1 : color2;
+                ctx.fill();
+            }
+            
+            // 中心円
+            if (showCenter) {
+                const circleRadius = size * centerSize / 2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, circleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = centerColor;
+                ctx.fill();
+            }
+        }
+        
+        function saveImage() {
+            const link = document.createElement('a');
+            const size = sizeSlider.value;
+            const segments = segmentsSlider.value;
+            link.download = `fan_pattern_${size}x${size}_${segments}segments.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // イベントリスナー
+        const inputs = [sizeSlider, segmentsSlider, rotationSlider, color1Input, color2Input, 
+                       showCenterCheckbox, centerSizeSlider, centerColorInput];
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                updateDisplay();
+                draw();
+            });
+        });
+        
+        // 初期描画
+        updateDisplay();
+        draw();
+    </script>
+</body>
+</html>
